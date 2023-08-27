@@ -16,7 +16,7 @@
 (straight-use-package 'htmlize)
 
 (setq base-directory "./content")
-(setq publishing-directory "./publish")
+(setq publishing-directory "./public")
 (setq html-head (string-join
                  (list "<link rel=\"stylesheet\" href=\"assets/theme.css\" type=\"text/css\" />"
                        "<script type=\"text/javascript\" src=\"assets/theme.js\"></script>")
@@ -30,7 +30,6 @@
          :base-extension "org"
          :publishing-directory ,publishing-directory
          :recursive t
-         :exclude "publish\\|README.org"
          :publishing-function org-html-publish-to-html
          :auto-sitemap t
          :sitemap-filename "index.org"
@@ -45,7 +44,6 @@
         ("Blog Stylesheet"
          :base-directory ,base-directory
          :base-extension "css\\|js\\|png"
-         :exclude "publish"
          :publishing-directory ,publishing-directory
          :recursive t
          :publishing-function org-publish-attachment)
