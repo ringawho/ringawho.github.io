@@ -14,6 +14,8 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 (straight-use-package 'htmlize)
+(when (< emacs-major-version 29)
+  (straight-use-package 'csharp-mode))
 (setq org-html-htmlize-output-type 'css)
 
 (setq base-directory "./content")
