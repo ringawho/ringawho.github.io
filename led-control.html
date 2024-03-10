@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2024-03-10 Sun 15:25 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>神舟mini PC7S Linux下氛围灯控制</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="ring" />
+<link rel="stylesheet" href="assets/org-src-block.css" type="text/css" />
+<link rel="stylesheet" href="assets/theme.css" type="text/css" />
+<script type="text/javascript" src="assets/theme.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">神舟mini PC7S Linux下氛围灯控制</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org33b9be0">1. 解决办法</a></li>
+<li><a href="#org0af9505">2. 逆向过程</a></li>
+<li><a href="#orgb3cf3fc">3. 使用 Cutecom 测试</a></li>
+<li><a href="#org6d1c098">4. Linux 氛围灯控制程序</a></li>
+<li><a href="#org3b544f7">5. 更好的使用方式</a>
+<ul>
+<li><a href="#org4aa9cb6">5.1. 锁屏关闭，解锁打开</a></li>
+<li><a href="#org277b1f4">5.2. 通过 Emacs 控制</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+2024元旦前购买了神舟的 mini 主机，安装了 Linux 系统，一切顺利。除了它的氛围灯，当晚影响到了我的睡眠，而 Linux 下也没有相应的控制程序，我不得不关机。
+</p>
+
+<p>
+最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 <a href="#org6d1c098">Linux 氛围灯控制程序</a>。
+</p>
+
+
+<div id="outline-container-org33b9be0" class="outline-2">
+<h2 id="org33b9be0"><span class="section-number-2">1</span> 解决办法</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+硬件层面：开盖拔线。这是从京东商品页的问答区找到的，但这样就是彻底失去了氛围灯
+</p>
+
+<p>
+软件层面：写一个 Linux 下的控制程序。这个想法是来自 <a href="https://manateelazycat.github.io/2023/10/25/dell-g16-keyboard-light/">Dell G16 在 Linux 下设置键盘灯 （逆向）</a>，之前看到也想试试，恰好我也了解点逆向，这不就刚好有动手机会了吗
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0af9505" class="outline-2">
+<h2 id="org0af9505"><span class="section-number-2">2</span> 逆向过程</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+在主机自带的 Windows 系统下，有一个 LedControl 的程序，目标就是它
+</p>
+
+<p>
+没有了解过 PC 的逆向，先用 IDA 打开，内容比较杂乱。但是在开始选择的时候类型的时候，有一项 Microsoft.Net assembly 选项，我就找了 C# 的反编译程序 dnspy。
+</p>
+
+<p>
+没有其他复杂的技术，几乎是源码展现在了面前，比较重要的是两段代码
+</p>
+
+<ol class="org-ol">
+<li><p>
+从页面元素入手，几个按钮都是如下形式，都是修改 <code>arrSerialData</code> 然后发送数据，数据分为五个部分
+</p>
+<ul class="org-ul">
+<li>固定数字250</li>
+<li>灯光模式：关闭-4，自动-5，彩虹-1，循环-3，呼吸-2</li>
+<li>6 - 亮度，共五级 1~5</li>
+<li>6 - 速度，也是五级</li>
+<li>是前五个数字之和 % 255，应该是相当于一个校验位</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-csharp">private byte[] arrSerialData = new byte[] { 250, 1, 3, 3, 0 };
+
+private void InitializeComponent() {
+    this.pictureBox_guandeng = new PictureBox();
+    this.pictureBox_guandeng.Click += this.pictureBox1_guandeng_Click;
+}
+private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
+    this.CurrentLedMode = 4;
+    this.arrSerialData[1] = (byte)this.CurrentLedMode;
+    this.Send_data(this.arrSerialData);
+    this.setPicboxImage();
+}
+</pre>
+</div></li>
+<li><p>
+第五个数据是在 <code>Send_data</code> 时计算的。发送时先 <code>openPort</code> ，然后依次发送数组中的数据，间隔5ms
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp">private void Send_data(byte[] senddata) {
+    byte[] array = new byte[] { 250, 1, 3, 3, 0 };
+    array[1] = senddata[1];
+    int num = 0;
+    for (int i = 0; i &lt; senddata.Length - 1; i++) {
+	num += (int)senddata[i];
+    }
+    byte b = (byte)num;
+    senddata[senddata.Length - 1] = b;
+    if (!(this.portName == string.Empty)) {
+	string empty = string.Empty;
+	this.openPort();
+	if (this.sp.IsOpen) {
+	    for (int j = 0; j &lt; senddata.Length; j++) {
+		array[0] = senddata[j];
+		this.delayUs(5.0);
+		this.sp.Write(array, 0, 1);
+	    }
+	    this.sp.Close();
+	}
+    }
+}
+</pre>
+</div></li>
+<li><p>
+这部分是 <code>openPort</code> ，需要注意的是串口的比特率是10000，数据大小是8 bit
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp">private void openPort() {
+    this.sp.PortName = this.portName;
+    this.sp.BaudRate = 10000;
+    this.sp.DataBits = 8;
+    this.sp.StopBits = StopBits.One;
+    this.sp.Parity = Parity.None;
+    this.sp.ReadTimeout = 200;
+    try {
+	this.sp.Open();
+	this.openState = true;
+    } catch (IOException) {
+	this.openState = false;
+    }
+}
+</pre>
+</div></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-orgb3cf3fc" class="outline-2">
+<h2 id="orgb3cf3fc"><span class="section-number-2">3</span> 使用 Cutecom 测试</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<a href="https://cutecom.sourceforge.net/">cutecom</a> 是一个串口调试工具，在分析完成之后，通过它来进行简单的调试
+</p>
+
+<ol class="org-ol">
+<li>按照上面分析的逻辑，设置波特率为 10000，数据大小为 8 bits。然后打开</li>
+<li>设置输入模式为 Hex，Char Delay 为 5ms</li>
+<li>输入 <code>fa 04 01 01 00</code> ，会发现氛围灯关闭；输入 <code>fa 02 01 01 fe</code> ，氛围灯打开，为呼吸模式</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org6d1c098" class="outline-2">
+<h2 id="org6d1c098"><span class="section-number-2">4</span> Linux 氛围灯控制程序</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+我使用的是 python 脚本，需要安装 <code>pyserial</code> 库
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">pip install pyserial
+</pre>
+</div>
+
+<p>
+控制程序如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span class="org-keyword">import</span> serial
+<span class="org-keyword">import</span> time
+<span class="org-keyword">import</span> sys
+
+<span class="org-keyword">def</span> <span class="org-function-name">sendData</span>(ledMode = 1, brightness = 3, speed = 3):
+    <span class="org-variable-name">data</span> = [250, ledMode, 6 - brightness, 6 - speed]
+    data.append(<span class="org-builtin">sum</span>(data) &amp; 0xFF)
+    <span class="org-keyword">print</span>(data)
+    <span class="org-keyword">with</span> serial.Serial(<span class="org-string">'/dev/ttyUSB0'</span>, baudrate=10000, timeout=200) <span class="org-keyword">as</span> ser:
+        <span class="org-keyword">for</span> b <span class="org-keyword">in</span> data:
+            time.sleep(0.005)
+            ser.write(b.to_bytes())
+
+
+<span class="org-keyword">if</span> <span class="org-builtin">__name__</span> == <span class="org-string">'__main__'</span>:
+    <span class="org-variable-name">default_params</span> = [4, 3, 3]
+    <span class="org-variable-name">params</span> = <span class="org-builtin">list</span>(<span class="org-builtin">map</span>(<span class="org-builtin">int</span>, sys.argv[1:]))
+    <span class="org-variable-name">params</span> = params + default_params[<span class="org-builtin">len</span>(params):]
+    sendData(params[0], params[1], params[2])
+</pre>
+</div>
+
+<p>
+命令行使用方式：
+</p>
+<div class="org-src-container">
+<pre class="src src-bash"><span class="org-comment-delimiter"># </span><span class="org-comment">&#19977;&#20010;&#21442;&#25968;&#20998;&#21035;&#26159;&#65306;&#27169;&#24335;&#65292;&#20142;&#24230;&#65292;&#28783;&#20809;&#21464;&#21270;&#36895;&#24230;</span>
+python led_control.py 4 1 1
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3b544f7" class="outline-2">
+<h2 id="org3b544f7"><span class="section-number-2">5</span> 更好的使用方式</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+显然，如果使用命令行方式，还是有点麻烦，每次想调节的时候还需要再打开命令行，而且我最主要的目标是晚上睡觉前关闭
+</p>
+</div>
+
+<div id="outline-container-org4aa9cb6" class="outline-3">
+<h3 id="org4aa9cb6"><span class="section-number-3">5.1</span> 锁屏关闭，解锁打开</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+首先需要一个 dbus 监控锁屏和解锁的事件，具体的 type 以及 interface 会有所不同，我的环境是 KDE。
+</p>
+
+<p>
+此外这里的脚本路径需要替换为自己的脚本路径，参数可根据自己喜好调节
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span class="org-comment-delimiter">#</span><span class="org-comment">!/bin/</span><span class="org-keyword">bash</span>
+dbus-monitor --session <span class="org-string">"type='signal',interface='org.freedesktop.ScreenSaver'"</span> |
+    <span class="org-keyword">while </span><span class="org-builtin">read</span> x; <span class="org-keyword">do</span>
+        <span class="org-keyword">case</span> <span class="org-string">"$x"</span><span class="org-keyword"> in</span>
+            *<span class="org-string">"boolean true"</span>*) python /home/ring/workspace/led_control/led_control.py 4 1 1;;
+            *<span class="org-string">"boolean false"</span>*) python /home/ring/workspace/led_control/led_control.py 1 1 1;;
+        <span class="org-keyword">esac</span>
+    <span class="org-keyword">done</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org277b1f4" class="outline-3">
+<h3 id="org277b1f4"><span class="section-number-3">5.2</span> 通过 Emacs 控制</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+如果你和我一样是用 Emacs 的人，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/led-control</span> (led-mode <span class="org-type">&amp;optional</span> brightness speed)
+  (<span class="org-keyword">interactive</span>
+   (<span class="org-keyword">let*</span> ((vertico-sort-function nil)
+          (modes '((<span class="org-string">"rainbow"</span> 1)
+                   (<span class="org-string">"breathe"</span> 2)
+                   (<span class="org-string">"loop"</span>    3)
+                   (<span class="org-string">"close"</span>   4)
+                   (<span class="org-string">"auto"</span>    5)))
+          (led-mode (cadr (assoc
+                           (completing-read <span class="org-string">"Led Mode: "</span> modes nil t)
+                           modes)))
+          (level (mapcar (<span class="org-keyword">lambda</span> (l)
+                           (list (format <span class="org-string">"Level %d"</span> l) l))
+                         '(1 2 3 4 5))))
+     (<span class="org-keyword">if</span> (= led-mode 4)
+         (list led-mode)
+       (list led-mode
+             (cadr (assoc (completing-read <span class="org-string">"Brightness: "</span> level nil t nil nil <span class="org-string">"Level 3"</span>) level))
+             (cadr (assoc (completing-read <span class="org-string">"Speed: "</span>      level nil t nil nil <span class="org-string">"Level 3"</span>) level))))))
+  (shell-command-to-string (format <span class="org-string">"python ~/workspace/led_control/led_control.py %s %s %s"</span>
+                                   led-mode
+                                   (<span class="org-keyword">or</span> brightness <span class="org-string">""</span>)
+                                   (<span class="org-keyword">or</span> speed <span class="org-string">""</span>))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: ring</p>
+<p class="date">Created: 2024-03-10 Sun 15:25</p>
+</div>
+</body>
+</html>

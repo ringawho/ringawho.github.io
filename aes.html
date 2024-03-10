@@ -3,12 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2023-08-27 Sun 09:27 -->
+<!-- 2024-03-10 Sun 15:25 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AES加密</title>
 <meta name="generator" content="Org mode" />
 <meta name="author" content="ring" />
+<link rel="stylesheet" href="assets/org-src-block.css" type="text/css" />
 <link rel="stylesheet" href="assets/theme.css" type="text/css" />
 <script type="text/javascript" src="assets/theme.js"></script>
 <script type="text/javascript">
@@ -65,14 +66,14 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org5ad9c95">1. 前言</a></li>
-<li><a href="#orgfe7f1da">2. <code>AES</code> 加密模式</a></li>
-<li><a href="#orgbdbf937">3. <code>AES</code> 加密过程</a></li>
+<li><a href="#orgc7beca1">1. 前言</a></li>
+<li><a href="#orgdc14750">2. <code>AES</code> 加密模式</a></li>
+<li><a href="#org87d83ed">3. <code>AES</code> 加密过程</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org5ad9c95" class="outline-2">
-<h2 id="org5ad9c95"><span class="section-number-2">1</span> 前言</h2>
+<div id="outline-container-orgc7beca1" class="outline-2">
+<h2 id="orgc7beca1"><span class="section-number-2">1</span> 前言</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 最近在了解逆向的事情，目前看了解并且熟悉常见的算法是很有必要的。AES就是常见的加密算法之一，最好的熟悉方式莫过于实现一遍
@@ -80,8 +81,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfe7f1da" class="outline-2">
-<h2 id="orgfe7f1da"><span class="section-number-2">2</span> <code>AES</code> 加密模式</h2>
+<div id="outline-container-orgdc14750" class="outline-2">
+<h2 id="orgdc14750"><span class="section-number-2">2</span> <code>AES</code> 加密模式</h2>
 <div class="outline-text-2" id="text-2">
 <ul class="org-ul">
 <li>ECB（Electronic Codebook，电子密码本）模式：这是最简单的加密模式，将明文分成固定大小的分组，然后对每个分组进行独立的加密。同样的明文块会生成相同的密文块，因此安全性较低，不推荐使用。</li>
@@ -97,12 +98,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbdbf937" class="outline-2">
-<h2 id="orgbdbf937"><span class="section-number-2">3</span> <code>AES</code> 加密过程</h2>
+<div id="outline-container-org87d83ed" class="outline-2">
+<h2 id="org87d83ed"><span class="section-number-2">3</span> <code>AES</code> 加密过程</h2>
 <div class="outline-text-2" id="text-3">
 <div class="org-src-container">
 <pre class="src src-dot">digraph G {
-    size = <span style="font-style: italic;">"4, 4"</span>;
+    size = <span class="org-string">"4, 4"</span>;
     splines = ortho;
     node[shape=box];
 
@@ -115,7 +116,7 @@ for the JavaScript code in this tag.
         label = &#31532;&#19968;&#36718;&#24490;&#29615;;
         labeljust = l;
         lwidth = 3;
-        bgcolor = <span style="font-style: italic;">"#EEEEEE"</span>;
+        bgcolor = <span class="org-string">"#EEEEEE"</span>;
         &#23383;&#33410;&#26367;&#20195; -&gt; &#34892;&#31227;&#20301; -&gt; &#21015;&#28151;&#28102; -&gt; key1
     }
 }
@@ -126,7 +127,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: ring</p>
-<p class="date">Created: 2023-08-27 Sun 09:27</p>
+<p class="date">Created: 2024-03-10 Sun 15:25</p>
 </div>
 </body>
 </html>
