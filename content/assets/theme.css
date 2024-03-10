@@ -36,10 +36,11 @@ html {
 }
 body {
     padding:  20px;
-    font-family:  Menlo, Monaco, monospace;
+    /* font-family:  Menlo, Monaco, monospace; */
+    font-family: "Times New Roman", Times,'LXGW WenKai',STFangSong, Helvetica, Arial, Vernada, Tahoma, STXihei, "Microsoft YaHei", "Songti SC", SimSun, Heiti, sans-serif;
     font-size:  14px;
     line-height:  1.5;
-    color:  #666;
+    color:  #333;
     background-color:  #fff;
 }
 p {
@@ -97,11 +98,12 @@ hr: after {
     color:  #ccc;
 }
 ul, ol {
-    padding:  0;
+    padding:  0 0 0 20px;;
     margin:  0 0 20px;
 }
 code, pre {
-    font-family:  Menlo, Monaco, Consolas, "Courier New", monospace;
+    /* font-family:  Menlo, Monaco, Consolas, "Courier New", monospace; */
+    font-family: monospace;
 }
 code {
     color:  #d14;
@@ -115,11 +117,11 @@ pre {
     margin:  0 0 14px;
     padding:  15px;
     border-radius:  3px 3px 3px 3px;
-    font-size:  18px;
-    line-height:  28px;
+    font-size:  16px;
+    line-height:  22px;
     background-color:  #f5f5f5;
-    white-space:  pre;
-    white-space:  pre-wrap;
+    /* white-space:  pre; */
+    /* white-space:  pre-wrap; */
     word-break:  break-all;
     word-wrap:  break-word;
 }
@@ -140,8 +142,11 @@ img {
 a {
     font-weight:  inherit;
     line-height:  inherit;
-    color:  #000;
+    color: #5FBB73;
     text-decoration:  none;
+}
+a:hover {
+    border-bottom: 1px dashed;
 }
 sup a:before {
     content:  "[";
@@ -345,6 +350,20 @@ body {
     /* margin-top:  -1.5em; */
 }
 
+/* title */
+.title {
+    text-align: center;
+    font-size: 20px;
+}
+
+.org-src-container {
+    /* padding: 15px; */
+    background-color:  #f5f5f5;
+}
+.org-src-container .src {
+    overflow: auto;
+}
+
 /* footer */
 .footer {
     margin:  80px 0 0;
@@ -358,6 +377,10 @@ body {
 }
 .footpara {
     display:  inline;
+}
+
+#postamble {
+    color: #666;
 }
 
 /* Responsive

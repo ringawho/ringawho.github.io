@@ -14,12 +14,15 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 (straight-use-package 'htmlize)
+(setq org-html-htmlize-output-type 'css)
 
 (setq base-directory "./content")
 (setq publishing-directory "./public")
 (setq html-head (string-join
-                 (list "<link rel=\"stylesheet\" href=\"assets/theme.css\" type=\"text/css\" />"
-                       "<script type=\"text/javascript\" src=\"assets/theme.js\"></script>")
+                 (list
+                  "<link rel=\"stylesheet\" href=\"assets/org-src-block.css\" type=\"text/css\" />"
+                  "<link rel=\"stylesheet\" href=\"assets/theme.css\" type=\"text/css\" />"
+                  "<script type=\"text/javascript\" src=\"assets/theme.js\"></script>")
                  "\n"))
 ;; :html-head "<link rel=\"stylesheet\" href=\"https://cdn.simplecss.org/simple.min.css\" />"
 

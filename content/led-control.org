@@ -1,0 +1,171 @@
+#+title: 神舟mini PC7S Linux下氛围灯控制
+
+2024元旦前购买了神舟的 mini 主机，安装了 Linux 系统，一切顺利。除了它的氛围灯，当晚影响到了我的睡眠，而 Linux 下也没有相应的控制程序，我不得不关机。
+
+最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 [[*Linux 氛围灯控制程序][Linux 氛围灯控制程序]]。
+
+
+* 解决办法
+硬件层面：开盖拔线。这是从京东商品页的问答区找到的，但这样就是彻底失去了氛围灯
+
+软件层面：写一个 Linux 下的控制程序。这个想法是来自 [[https://manateelazycat.github.io/2023/10/25/dell-g16-keyboard-light/][Dell G16 在 Linux 下设置键盘灯 （逆向）]]，之前看到也想试试，恰好我也了解点逆向，这不就刚好有动手机会了吗
+
+* 逆向过程
+在主机自带的 Windows 系统下，有一个 LedControl 的程序，目标就是它
+
+没有了解过 PC 的逆向，先用 IDA 打开，内容比较杂乱。但是在开始选择的时候类型的时候，有一项 Microsoft.Net assembly 选项，我就找了 C# 的反编译程序 dnspy。
+
+没有其他复杂的技术，几乎是源码展现在了面前，比较重要的是两段代码
+
+1. 从页面元素入手，几个按钮都是如下形式，都是修改 ~arrSerialData~ 然后发送数据，数据分为五个部分
+   * 固定数字250
+   * 灯光模式：关闭-4，自动-5，彩虹-1，循环-3，呼吸-2
+   * 6 - 亮度，共五级 1~5
+   * 6 - 速度，也是五级
+   * 是前五个数字之和 % 255，应该是相当于一个校验位
+   #+begin_src csharp
+     private byte[] arrSerialData = new byte[] { 250, 1, 3, 3, 0 };
+
+     private void InitializeComponent() {
+         this.pictureBox_guandeng = new PictureBox();
+         this.pictureBox_guandeng.Click += this.pictureBox1_guandeng_Click;
+     }
+     private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
+         this.CurrentLedMode = 4;
+         this.arrSerialData[1] = (byte)this.CurrentLedMode;
+         this.Send_data(this.arrSerialData);
+         this.setPicboxImage();
+     }
+   #+end_src
+2. 第五个数据是在 ~Send_data~ 时计算的。发送时先 ~openPort~ ，然后依次发送数组中的数据，间隔5ms
+   #+begin_src csharp
+     private void Send_data(byte[] senddata) {
+         byte[] array = new byte[] { 250, 1, 3, 3, 0 };
+         array[1] = senddata[1];
+         int num = 0;
+         for (int i = 0; i < senddata.Length - 1; i++) {
+             num += (int)senddata[i];
+         }
+         byte b = (byte)num;
+         senddata[senddata.Length - 1] = b;
+         if (!(this.portName == string.Empty)) {
+             string empty = string.Empty;
+             this.openPort();
+             if (this.sp.IsOpen) {
+                 for (int j = 0; j < senddata.Length; j++) {
+                     array[0] = senddata[j];
+                     this.delayUs(5.0);
+                     this.sp.Write(array, 0, 1);
+                 }
+                 this.sp.Close();
+             }
+         }
+     }
+   #+end_src
+3. 这部分是 ~openPort~ ，需要注意的是串口的比特率是10000，数据大小是8 bit
+   #+begin_src csharp
+     private void openPort() {
+         this.sp.PortName = this.portName;
+         this.sp.BaudRate = 10000;
+         this.sp.DataBits = 8;
+         this.sp.StopBits = StopBits.One;
+         this.sp.Parity = Parity.None;
+         this.sp.ReadTimeout = 200;
+         try {
+             this.sp.Open();
+             this.openState = true;
+         } catch (IOException) {
+             this.openState = false;
+         }
+     }
+   #+end_src
+
+* 使用 Cutecom 测试
+[[https://cutecom.sourceforge.net/][cutecom]] 是一个串口调试工具，在分析完成之后，通过它来进行简单的调试
+
+1. 按照上面分析的逻辑，设置波特率为 10000，数据大小为 8 bits。然后打开
+2. 设置输入模式为 Hex，Char Delay 为 5ms
+3. 输入 =fa 04 01 01 00= ，会发现氛围灯关闭；输入 =fa 02 01 01 fe= ，氛围灯打开，为呼吸模式
+
+* Linux 氛围灯控制程序
+我使用的是 python 脚本，需要安装 ~pyserial~ 库
+#+begin_src bash
+  pip install pyserial
+#+end_src
+
+控制程序如下：
+#+begin_src python
+  import serial
+  import time
+  import sys
+
+  def sendData(ledMode = 1, brightness = 3, speed = 3):
+      data = [250, ledMode, 6 - brightness, 6 - speed]
+      data.append(sum(data) & 0xFF)
+      print(data)
+      with serial.Serial('/dev/ttyUSB0', baudrate=10000, timeout=200) as ser:
+          for b in data:
+              time.sleep(0.005)
+              ser.write(b.to_bytes())
+
+
+  if __name__ == '__main__':
+      default_params = [4, 3, 3]
+      params = list(map(int, sys.argv[1:]))
+      params = params + default_params[len(params):]
+      sendData(params[0], params[1], params[2])
+#+end_src
+
+命令行使用方式：
+#+begin_src bash
+  # 三个参数分别是：模式，亮度，灯光变化速度
+  python led_control.py 4 1 1
+#+end_src
+
+* 更好的使用方式
+显然，如果使用命令行方式，还是有点麻烦，每次想调节的时候还需要再打开命令行，而且我最主要的目标是晚上睡觉前关闭
+
+** 锁屏关闭，解锁打开
+首先需要一个 dbus 监控锁屏和解锁的事件，具体的 type 以及 interface 会有所不同，我的环境是 KDE。
+
+此外这里的脚本路径需要替换为自己的脚本路径，参数可根据自己喜好调节
+
+#+begin_src bash
+  #!/bin/bash
+  dbus-monitor --session "type='signal',interface='org.freedesktop.ScreenSaver'" |
+      while read x; do
+          case "$x" in
+              ,*"boolean true"*) python /home/ring/workspace/led_control/led_control.py 4 1 1;;
+              ,*"boolean false"*) python /home/ring/workspace/led_control/led_control.py 1 1 1;;
+          esac
+      done
+#+end_src
+
+** 通过 Emacs 控制
+如果你和我一样是用 Emacs 的人，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
+
+#+begin_src emacs-lisp
+  (defun ringawho/led-control (led-mode &optional brightness speed)
+    (interactive
+     (let* ((vertico-sort-function nil)
+            (modes '(("rainbow" 1)
+                     ("breathe" 2)
+                     ("loop"    3)
+                     ("close"   4)
+                     ("auto"    5)))
+            (led-mode (cadr (assoc
+                             (completing-read "Led Mode: " modes nil t)
+                             modes)))
+            (level (mapcar (lambda (l)
+                             (list (format "Level %d" l) l))
+                           '(1 2 3 4 5))))
+       (if (= led-mode 4)
+           (list led-mode)
+         (list led-mode
+               (cadr (assoc (completing-read "Brightness: " level nil t nil nil "Level 3") level))
+               (cadr (assoc (completing-read "Speed: "      level nil t nil nil "Level 3") level))))))
+    (shell-command-to-string (format "python ~/workspace/led_control/led_control.py %s %s %s"
+                                     led-mode
+                                     (or brightness "")
+                                     (or speed ""))))
+#+end_src
