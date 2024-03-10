@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-03-10 Sun 15:25 -->
+<!-- 2024-03-10 Sun 15:32 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>神舟mini PC7S Linux下氛围灯控制</title>
@@ -66,14 +66,14 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org33b9be0">1. 解决办法</a></li>
-<li><a href="#org0af9505">2. 逆向过程</a></li>
-<li><a href="#orgb3cf3fc">3. 使用 Cutecom 测试</a></li>
-<li><a href="#org6d1c098">4. Linux 氛围灯控制程序</a></li>
-<li><a href="#org3b544f7">5. 更好的使用方式</a>
+<li><a href="#org0ff3a5e">1. 解决办法</a></li>
+<li><a href="#org7ab0695">2. 逆向过程</a></li>
+<li><a href="#org4e57af6">3. 使用 Cutecom 测试</a></li>
+<li><a href="#orga2727c3">4. Linux 氛围灯控制程序</a></li>
+<li><a href="#orgeb4f65a">5. 更好的使用方式</a>
 <ul>
-<li><a href="#org4aa9cb6">5.1. 锁屏关闭，解锁打开</a></li>
-<li><a href="#org277b1f4">5.2. 通过 Emacs 控制</a></li>
+<li><a href="#org050407d">5.1. 锁屏关闭，解锁打开</a></li>
+<li><a href="#org8d78d10">5.2. 通过 Emacs 控制</a></li>
 </ul>
 </li>
 </ul>
@@ -84,12 +84,12 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 <a href="#org6d1c098">Linux 氛围灯控制程序</a>。
+最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 <a href="#orga2727c3">Linux 氛围灯控制程序</a>。
 </p>
 
 
-<div id="outline-container-org33b9be0" class="outline-2">
-<h2 id="org33b9be0"><span class="section-number-2">1</span> 解决办法</h2>
+<div id="outline-container-org0ff3a5e" class="outline-2">
+<h2 id="org0ff3a5e"><span class="section-number-2">1</span> 解决办法</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 硬件层面：开盖拔线。这是从京东商品页的问答区找到的，但这样就是彻底失去了氛围灯
@@ -101,8 +101,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org0af9505" class="outline-2">
-<h2 id="org0af9505"><span class="section-number-2">2</span> 逆向过程</h2>
+<div id="outline-container-org7ab0695" class="outline-2">
+<h2 id="org7ab0695"><span class="section-number-2">2</span> 逆向过程</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 在主机自带的 Windows 系统下，有一个 LedControl 的程序，目标就是它
@@ -128,17 +128,17 @@ for the JavaScript code in this tag.
 <li>是前五个数字之和 % 255，应该是相当于一个校验位</li>
 </ul>
 <div class="org-src-container">
-<pre class="src src-csharp">private byte[] arrSerialData = new byte[] { 250, 1, 3, 3, 0 };
+<pre class="src src-csharp"><span class="org-keyword">private</span> <span class="org-type">byte</span>[] <span class="org-variable-name">arrSerialData</span> = <span class="org-keyword">new</span> <span class="org-type">byte</span>[] { 250, 1, 3, 3, 0 };
 
-private void InitializeComponent() {
-    this.pictureBox_guandeng = new PictureBox();
-    this.pictureBox_guandeng.Click += this.pictureBox1_guandeng_Click;
+<span class="org-keyword">private</span> <span class="org-type">void</span> <span class="org-function-name">InitializeComponent</span>() {
+    <span class="org-keyword">this</span>.pictureBox_guandeng = <span class="org-keyword">new</span> <span class="org-type">PictureBox</span>();
+    <span class="org-keyword">this</span>.pictureBox_guandeng.Click += <span class="org-keyword">this</span>.pictureBox1_guandeng_Click;
 }
-private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
-    this.CurrentLedMode = 4;
-    this.arrSerialData[1] = (byte)this.CurrentLedMode;
-    this.Send_data(this.arrSerialData);
-    this.setPicboxImage();
+<span class="org-keyword">private</span> <span class="org-type">void</span> <span class="org-function-name">pictureBox1_guandeng_Click</span>(<span class="org-type">object</span> <span class="org-variable-name">sender</span>, <span class="org-type">EventArgs</span> <span class="org-variable-name">e</span>) {
+    <span class="org-keyword">this</span>.CurrentLedMode = 4;
+    <span class="org-keyword">this</span>.arrSerialData[1] = (<span class="org-type">byte</span>)<span class="org-keyword">this</span>.CurrentLedMode;
+    <span class="org-keyword">this</span>.<span class="org-function-name">Send_data</span>(<span class="org-keyword">this</span>.arrSerialData);
+    <span class="org-keyword">this</span>.<span class="org-function-name">setPicboxImage</span>();
 }
 </pre>
 </div></li>
@@ -146,26 +146,26 @@ private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
 第五个数据是在 <code>Send_data</code> 时计算的。发送时先 <code>openPort</code> ，然后依次发送数组中的数据，间隔5ms
 </p>
 <div class="org-src-container">
-<pre class="src src-csharp">private void Send_data(byte[] senddata) {
-    byte[] array = new byte[] { 250, 1, 3, 3, 0 };
+<pre class="src src-csharp"><span class="org-keyword">private</span> <span class="org-type">void</span> <span class="org-function-name">Send_data</span>(<span class="org-type">byte</span>[] <span class="org-variable-name">senddata</span>) {
+    <span class="org-type">byte</span>[] <span class="org-variable-name">array</span> = <span class="org-keyword">new</span> <span class="org-type">byte</span>[] { 250, 1, 3, 3, 0 };
     array[1] = senddata[1];
-    int num = 0;
-    for (int i = 0; i &lt; senddata.Length - 1; i++) {
-	num += (int)senddata[i];
+    <span class="org-type">int</span> <span class="org-variable-name">num</span> = 0;
+    <span class="org-keyword">for</span> (<span class="org-type">int</span> <span class="org-variable-name">i</span> = 0; i &lt; senddata.Length - 1; i++) {
+        num += (<span class="org-type">int</span>)senddata[i];
     }
-    byte b = (byte)num;
+    <span class="org-type">byte</span> <span class="org-variable-name">b</span> = (<span class="org-type">byte</span>)num;
     senddata[senddata.Length - 1] = b;
-    if (!(this.portName == string.Empty)) {
-	string empty = string.Empty;
-	this.openPort();
-	if (this.sp.IsOpen) {
-	    for (int j = 0; j &lt; senddata.Length; j++) {
-		array[0] = senddata[j];
-		this.delayUs(5.0);
-		this.sp.Write(array, 0, 1);
-	    }
-	    this.sp.Close();
-	}
+    <span class="org-keyword">if</span> (<span class="org-negation-char">!</span>(<span class="org-keyword">this</span>.portName == <span class="org-type">string</span>.Empty)) {
+        <span class="org-type">string</span> <span class="org-variable-name">empty</span> = <span class="org-type">string</span>.Empty;
+        <span class="org-keyword">this</span>.<span class="org-function-name">openPort</span>();
+        <span class="org-keyword">if</span> (<span class="org-keyword">this</span>.sp.IsOpen) {
+            <span class="org-keyword">for</span> (<span class="org-type">int</span> <span class="org-variable-name">j</span> = 0; j &lt; senddata.Length; j++) {
+                array[0] = senddata[j];
+                <span class="org-keyword">this</span>.<span class="org-function-name">delayUs</span>(5.0);
+                <span class="org-keyword">this</span>.sp.<span class="org-function-name">Write</span>(array, 0, 1);
+            }
+            <span class="org-keyword">this</span>.sp.<span class="org-function-name">Close</span>();
+        }
     }
 }
 </pre>
@@ -174,18 +174,18 @@ private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
 这部分是 <code>openPort</code> ，需要注意的是串口的比特率是10000，数据大小是8 bit
 </p>
 <div class="org-src-container">
-<pre class="src src-csharp">private void openPort() {
-    this.sp.PortName = this.portName;
-    this.sp.BaudRate = 10000;
-    this.sp.DataBits = 8;
-    this.sp.StopBits = StopBits.One;
-    this.sp.Parity = Parity.None;
-    this.sp.ReadTimeout = 200;
-    try {
-	this.sp.Open();
-	this.openState = true;
-    } catch (IOException) {
-	this.openState = false;
+<pre class="src src-csharp"><span class="org-keyword">private</span> <span class="org-type">void</span> <span class="org-function-name">openPort</span>() {
+    <span class="org-keyword">this</span>.sp.PortName = <span class="org-keyword">this</span>.portName;
+    <span class="org-keyword">this</span>.sp.BaudRate = 10000;
+    <span class="org-keyword">this</span>.sp.DataBits = 8;
+    <span class="org-keyword">this</span>.sp.StopBits = StopBits.One;
+    <span class="org-keyword">this</span>.sp.Parity = Parity.None;
+    <span class="org-keyword">this</span>.sp.ReadTimeout = 200;
+    <span class="org-keyword">try</span> {
+        <span class="org-keyword">this</span>.sp.<span class="org-function-name">Open</span>();
+        <span class="org-keyword">this</span>.openState = <span class="org-constant">true</span>;
+    } <span class="org-keyword">catch</span> (<span class="org-type">IOException</span>) {
+        <span class="org-keyword">this</span>.openState = <span class="org-constant">false</span>;
     }
 }
 </pre>
@@ -194,8 +194,8 @@ private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
 </div>
 </div>
 
-<div id="outline-container-orgb3cf3fc" class="outline-2">
-<h2 id="orgb3cf3fc"><span class="section-number-2">3</span> 使用 Cutecom 测试</h2>
+<div id="outline-container-org4e57af6" class="outline-2">
+<h2 id="org4e57af6"><span class="section-number-2">3</span> 使用 Cutecom 测试</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <a href="https://cutecom.sourceforge.net/">cutecom</a> 是一个串口调试工具，在分析完成之后，通过它来进行简单的调试
@@ -209,8 +209,8 @@ private void pictureBox1_guandeng_Click(object sender, EventArgs e) {
 </div>
 </div>
 
-<div id="outline-container-org6d1c098" class="outline-2">
-<h2 id="org6d1c098"><span class="section-number-2">4</span> Linux 氛围灯控制程序</h2>
+<div id="outline-container-orga2727c3" class="outline-2">
+<h2 id="orga2727c3"><span class="section-number-2">4</span> Linux 氛围灯控制程序</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 我使用的是 python 脚本，需要安装 <code>pyserial</code> 库
@@ -257,16 +257,16 @@ python led_control.py 4 1 1
 </div>
 </div>
 
-<div id="outline-container-org3b544f7" class="outline-2">
-<h2 id="org3b544f7"><span class="section-number-2">5</span> 更好的使用方式</h2>
+<div id="outline-container-orgeb4f65a" class="outline-2">
+<h2 id="orgeb4f65a"><span class="section-number-2">5</span> 更好的使用方式</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 显然，如果使用命令行方式，还是有点麻烦，每次想调节的时候还需要再打开命令行，而且我最主要的目标是晚上睡觉前关闭
 </p>
 </div>
 
-<div id="outline-container-org4aa9cb6" class="outline-3">
-<h3 id="org4aa9cb6"><span class="section-number-3">5.1</span> 锁屏关闭，解锁打开</h3>
+<div id="outline-container-org050407d" class="outline-3">
+<h3 id="org050407d"><span class="section-number-3">5.1</span> 锁屏关闭，解锁打开</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 首先需要一个 dbus 监控锁屏和解锁的事件，具体的 type 以及 interface 会有所不同，我的环境是 KDE。
@@ -290,8 +290,8 @@ dbus-monitor --session <span class="org-string">"type='signal',interface='org.fr
 </div>
 </div>
 
-<div id="outline-container-org277b1f4" class="outline-3">
-<h3 id="org277b1f4"><span class="section-number-3">5.2</span> 通过 Emacs 控制</h3>
+<div id="outline-container-org8d78d10" class="outline-3">
+<h3 id="org8d78d10"><span class="section-number-3">5.2</span> 通过 Emacs 控制</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 如果你和我一样是用 Emacs 的人，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
@@ -329,7 +329,7 @@ dbus-monitor --session <span class="org-string">"type='signal',interface='org.fr
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: ring</p>
-<p class="date">Created: 2024-03-10 Sun 15:25</p>
+<p class="date">Created: 2024-03-10 Sun 15:32</p>
 </div>
 </body>
 </html>
