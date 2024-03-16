@@ -17,7 +17,9 @@
 (when (< emacs-major-version 29)
   (straight-use-package 'csharp-mode))
 (setq org-html-htmlize-output-type 'css
-      org-html-head-include-scripts t)
+      org-html-head-include-scripts t
+      org-html-postamble t
+      org-html-postamble-format '(("en" "<p class=\"author\">Author: %a</p>\n<p class=\"date\">Date: %d</p>")))
 
 (setq base-directory "./content")
 (setq publishing-directory "./public")
@@ -29,6 +31,15 @@
                  "\n"))
 ;; :html-head "<link rel=\"stylesheet\" href=\"https://cdn.simplecss.org/simple.min.css\" />"
 
+(defun org-publish-sitemap-with-date (title list)
+  "Default site map, as a string.
+TITLE is the title of the site map.  LIST is an internal
+representation for the files to include, as returned by
+`org-list-to-lisp'.  PROJECT is the current project."
+  (concat "#+title: " title "\n"
+          "#+date: " (format-time-string (org-time-stamp-format nil t) (current-time)) "\n"
+	      (org-list-to-org list)))
+
 (setq org-publish-project-alist
       `(("Blog Html"
          :author "ring"
@@ -39,14 +50,17 @@
          :publishing-function org-html-publish-to-html
          :auto-sitemap t
          :sitemap-filename "index.org"
+         :sitemap-function org-publish-sitemap-with-date
          :sitemap-title "ring"
+         :sitemap-sort-files anti-chronologically
          ;; :makeindex t
          :with-toc t
 
-         :html-validation-link nil
+         ;; :html-validation-link nil
          :html-checkbox-type html
          :html-head-include-default-style nil
-         :html-head ,html-head)
+         :html-head ,html-head
+         :html-metadata-timestamp-format "%Y-%m-%d")
         ("Blog Stylesheet"
          :base-directory ,base-directory
          :base-extension "css\\|js\\|png"
