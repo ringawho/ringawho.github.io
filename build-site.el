@@ -16,7 +16,8 @@
 (straight-use-package 'htmlize)
 (when (< emacs-major-version 29)
   (straight-use-package 'csharp-mode))
-(setq org-html-htmlize-output-type 'css)
+(setq org-html-htmlize-output-type 'css
+      org-html-head-include-scripts t)
 
 (setq base-directory "./content")
 (setq publishing-directory "./public")

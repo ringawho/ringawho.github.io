@@ -363,6 +363,9 @@ body {
 .org-src-container .src {
     overflow: auto;
 }
+.code-highlighted {
+    background-color: #D9DD99;
+}
 
 /* footer */
 .footer {

@@ -142,7 +142,7 @@
 #+end_src
 
 ** 通过 Emacs 控制
-如果你和我一样是用 Emacs 的人，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
+如果你也使用 Emacs 的话，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
 
 #+begin_src emacs-lisp
   (defun ringawho/led-control (led-mode &optional brightness speed)
