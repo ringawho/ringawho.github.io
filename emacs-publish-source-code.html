@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-07-02 -->
+<!-- 2024-11-30 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Emacs Publish 的源码高亮问题</title>
@@ -66,16 +66,16 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org66bd018">1. 源码高亮不正确的问题</a></li>
-<li><a href="#org1ec9a83">2. 使用外部 css</a></li>
-<li><a href="#orge3b0f31">3. 生成 CSS</a></li>
-<li><a href="#org1cf7e9c">4. 完整的方案</a></li>
+<li><a href="#org516baa7">1. 源码高亮不正确的问题</a></li>
+<li><a href="#org43e1a24">2. 使用外部 css</a></li>
+<li><a href="#orgce80b3e">3. 生成 CSS</a></li>
+<li><a href="#org6105a6d">4. 完整的方案</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org66bd018" class="outline-2">
-<h2 id="org66bd018"><span class="section-number-2">1</span> 源码高亮不正确的问题</h2>
+<div id="outline-container-org516baa7" class="outline-2">
+<h2 id="org516baa7"><span class="section-number-2">1</span> 源码高亮不正确的问题</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 当前 publish org 文件的时候，是将相关 lisp 代码放在一个文件中，再通过 bash 执行 。但写上一篇文章时，突然发现，虽然使用了 <code>htmlize</code> , 代码部分有高亮，但是和主题并不一致，是黑白色，仅有下划线和粗体的样式
@@ -89,8 +89,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1ec9a83" class="outline-2">
-<h2 id="org1ec9a83"><span class="section-number-2">2</span> 使用外部 css</h2>
+<div id="outline-container-org43e1a24" class="outline-2">
+<h2 id="org43e1a24"><span class="section-number-2">2</span> 使用外部 css</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 最终发现是 batch 模式中，emacs有字体定义，但是没有颜色。所以解决办法是设置 <code>org-html-htmlize-output-type</code> 为 <code>'css</code> ，然后再增加 CSS 文件
@@ -115,8 +115,8 @@ in all modes you want.  Then, use the command
 </div>
 </div>
 
-<div id="outline-container-orge3b0f31" class="outline-2">
-<h2 id="orge3b0f31"><span class="section-number-2">3</span> 生成 CSS</h2>
+<div id="outline-container-orgce80b3e" class="outline-2">
+<h2 id="orgce80b3e"><span class="section-number-2">3</span> 生成 CSS</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 我尝试用 <code>org-html-htmlize-generate-css</code> 生成 CSS，但是出来许多不必要的样式，而且关键是代码高亮依旧是错误的
@@ -181,8 +181,8 @@ in all modes you want.  Then, use the command
 </div>
 </div>
 
-<div id="outline-container-org1cf7e9c" class="outline-2">
-<h2 id="org1cf7e9c"><span class="section-number-2">4</span> 完整的方案</h2>
+<div id="outline-container-org6105a6d" class="outline-2">
+<h2 id="org6105a6d"><span class="section-number-2">4</span> 完整的方案</h2>
 <div class="outline-text-2" id="text-4">
 <ol class="org-ol">
 <li><p>

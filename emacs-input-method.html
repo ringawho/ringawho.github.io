@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2024-11-30 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MacOS Emacs输入法切换</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="ring" />
+<link rel="stylesheet" href="assets/org-src-block.css" type="text/css" />
+<link rel="stylesheet" href="assets/theme.css" type="text/css" />
+<script type="text/javascript" src="assets/theme.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">MacOS Emacs输入法切换</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgff4d532">1. Emacs 中的输入法切换问题</a></li>
+<li><a href="#orge78c98d">2. 解决办法</a></li>
+<li><a href="#org01c80e0">3. 使用 sis 以及 patch Squirrel 实现输入法切换</a></li>
+</ul>
+</div>
+</div>
+<p>
+最近两天折腾了一下 MacOS Emacs 输入法切换的问题，使用了 sis 以及自己 patch Squirrel 实现的（Squirrel是rime的MacOS版本），如果你已经对输入法切换比较熟悉或者是对背景不感兴趣，可以直接跳转到 <a href="#org01c80e0">使用 sis 以及 patch Squirrel 实现输入法切换</a>
+</p>
+
+<div id="outline-container-orgff4d532" class="outline-2">
+<h2 id="orgff4d532"><span class="section-number-2">1</span> Emacs 中的输入法切换问题</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+如果需要经常在 Emacs 中输入中文，那么会碰到输入法切换的问题，主要有两种场景
+</p>
+
+<ol class="org-ol">
+<li>快捷键：比如使用 <code>C-x b</code> 的时候，如果本来是在输入中文，在输入 <code>b</code> 的时候，就需要 <code>Enter</code> 或 <code>Shift</code> 将该字符上屏</li>
+<li><code>minibuffer</code> 中的输入：比如选择 <code>buffer</code> ，或是找函数 / 变量的文档，就需要再由中文切换到英文</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-orge78c98d" class="outline-2">
+<h2 id="orge78c98d"><span class="section-number-2">2</span> 解决办法</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+下面是我目前知道的方法，这些方法都很好，只是我在使用时会碰到一些问题，我这里就不过多的赘述优点了，主要列一下碰到的问题，以及分享我的解决方案 （MacOS下）
+</p>
+
+<ol class="org-ol">
+<li>Emacs 内部的输入法： <code>emacs-rime</code> 以及 <code>pyim</code> 。我只使用过 <code>emacs-rime</code> ，感受还是很丝滑的
+<ul class="org-ul">
+<li>在 Emacs 内部和外部一样使用 <code>Shift</code> 切换中英文状态。解决办法：使用 <code>Karabiner-Elements</code> 映射了快捷键</li>
+<li>在切换到 Emacs 时，需要保证它是英文输入法（这里并不是指中文输入法的英文状态）。解决办法： <code>Input Source Pro</code> 设置 Emacs 的规则</li>
+<li><code>isearch</code> 中无法使用 <code>emacs-rime</code> 。解决办法： <code>isearch-mb</code> 包，或者 <code>Swiper</code>, <code>consult-line</code> 等。但我目前是只想用 <code>isearch</code> ，碰到需要中文的情况也只是将就用，或者临时使用 <code>consult-line</code></li>
+<li>内外的词库不统一。解决办法：手动同步词库。需求不大，所以没有想办法定时去同步，偶尔会碰到</li>
+<li>字体中不包含的字符，出现之后会卡顿一会。解决办法： <code>(setq inhibit-compacting-font-caches t)</code>, 这样就只会卡第一次了</li>
+</ul></li>
+<li><a href="https://github.com/laishulu/emacs-smart-input-source">sis</a>： 前段时间想从 <code>emacs-rime</code> 切换出来，做了尝试，目前对我来说最大的问题是，它是在中英文输入法之间切换的。当我想主动进行切换的时候，需要使用切换输入法的快捷键（在MacOS上是点按CapsLock），但是在其他程序中我切换仅仅是 <code>Shift</code> 切换中英文输入状态，按键不一致，对我来说有比较大的心智负担</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org01c80e0" class="outline-2">
+<h2 id="org01c80e0"><span class="section-number-2">3</span> 使用 sis 以及 patch Squirrel 实现输入法切换</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+我的目标是尽可能的全局使用一个输入法，相对来说 sis 是比较符合我的需求的，重点在于怎么由中英文输入法之前切换转到中英文输入状态的切换。
+</p>
+
+<p>
+在简单看过 sis 的文档以及部分实现之后，知道它的核心在于 <code>sis-do-get</code>, <code>sis-do-set</code> 方法，它的输入状态显示以及输入法切换等功能都是基于此实现的。在不同的操作环境有现有的一些解决方案，比如 <code>im-select</code>, <code>macism</code>, <code>fcitx</code> 等等。所以想实现目标，只要能提供中英文输入状态的 <code>get / set</code> 即可
+</p>
+
+<p>
+那么 Squirrel 是否提供了这个功能呢，很遗憾，没有，它的命令行只有 <code>sync</code> 和 <code>deploy</code> 功能。不过它是开源的，那么就可以自己进行改造，Squirrel patch 如下，实现方法并不是很好，而且端口还是写死的。主要还是不会 Swift/OC 这一套，下面的代码还是在 AI 的辅助下写出来的呢
+</p>
+
+<p>
+主要的逻辑就两点：
+</p>
+<ol class="org-ol">
+<li><code>SquirrelInputController</code> 暴露出获取以及设置 <code>ascii_mode</code> 的方法</li>
+<li>通过 <code>socket</code> 暴露出获取和设置中英文输入状态的接口</li>
+</ol>
+
+<div class="org-src-container">
+<pre class="src src-diff"><span class="org-diff-header">diff --git a/sources/SquirrelApplicationDelegate.swift b/sources/SquirrelApplicationDelegate.swift</span>
+<span class="org-diff-header">index c603760..1459a68 100644</span>
+<span class="org-diff-header">--- </span><span class="org-diff-header"><span class="org-diff-file-header">a/sources/SquirrelApplicationDelegate.swift</span></span>
+<span class="org-diff-header">+++ </span><span class="org-diff-header"><span class="org-diff-file-header">b/sources/SquirrelApplicationDelegate.swift</span></span>
+<span class="org-diff-hunk-header">@@ -8,6 +8,7 @@</span>
+<span class="org-diff-context"> import UserNotifications</span>
+<span class="org-diff-context"> import Sparkle</span>
+<span class="org-diff-context"> import AppKit</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">import Network</span>
+
+<span class="org-diff-context"> final class SquirrelApplicationDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegate, UNUserNotificationCenterDelegate {</span>
+<span class="org-diff-context">   static let rimeWikiURL = URL(string: "https://github.com/rime/home/wiki")!</span>
+<span class="org-diff-hunk-header">@@ -225,6 +226,54 @@</span><span class="org-diff-function"> final class SquirrelApplicationDelegate: NSObject, NSApplicationDelegate, SPUSta</span>
+<span class="org-diff-context">     let notifCenter = DistributedNotificationCenter.default()</span>
+<span class="org-diff-context">     notifCenter.addObserver(forName: .init("SquirrelReloadNotification"), object: nil, queue: nil, using: rimeNeedsReload)</span>
+<span class="org-diff-context">     notifCenter.addObserver(forName: .init("SquirrelSyncNotification"), object: nil, queue: nil, using: rimeNeedsSync)</span>
+<span class="org-diff-indicator-added">+</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">    do {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">      let listener = try NWListener(using: .tcp, on: 12345)</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">      listener.newConnectionHandler = { connection in</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">        connection.start(queue: .global())</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">        func receiveData() {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">          connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, isComplete, error in</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">            if let data = data, !data.isEmpty {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              let req = String(data: data, encoding: .utf8) ?? "Invalid data"</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              let cmd = req.split(whereSeparator: { $0.isWhitespace })</span>
+<span class="org-diff-indicator-added">+</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              NSLog("socket req: " + req + ", cmd: " + cmd.description)</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              var resp = "Unknown"</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              if let inputController = self.panel?.inputController {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                if cmd[0] == "GetInputMode" {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  resp = inputController.getInputMode() ? "true" : "false"</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                } else if cmd[0] == "SetInputMode" {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  let ascii_mode = cmd.count &gt;= 2 &amp;&amp; cmd[1] == "false" ? false : true</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  inputController.setInputMode(ascii_mode: ascii_mode)</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  resp = "Set Success"</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              } else {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                resp = "Can not get InputController"</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              connection.send(content: resp.data(using: .utf8), completion: .contentProcessed({ error in</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                if let error = error {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  NSLog("socket error %s", error.debugDescription)</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                  print("Send error: \(error)")</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              }))</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">            }</span>
+<span class="org-diff-indicator-added">+</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">            if error == nil &amp;&amp; !isComplete {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              DispatchQueue.global().async {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">                receiveData()</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">            } else {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              NSLog("socket connection cancel")</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">              connection.cancel()</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">            }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">          }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">        }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">        receiveData()</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">      }</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">      listener.start(queue: .global())</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">    } catch {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">      NSLog("socket error")</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">    }</span>
+<span class="org-diff-context">   }</span>
+
+<span class="org-diff-context">   func applicationShouldTerminate(_ sender: NSApplication) -&gt; NSApplication.TerminateReply {</span>
+<span class="org-diff-header">diff --git a/sources/SquirrelInputController.swift b/sources/SquirrelInputController.swift</span>
+<span class="org-diff-header">index b835f42..360e3f7 100644</span>
+<span class="org-diff-header">--- </span><span class="org-diff-header"><span class="org-diff-file-header">a/sources/SquirrelInputController.swift</span></span>
+<span class="org-diff-header">+++ </span><span class="org-diff-header"><span class="org-diff-file-header">b/sources/SquirrelInputController.swift</span></span>
+<span class="org-diff-hunk-header">@@ -29,6 +29,14 @@</span><span class="org-diff-function"> final class SquirrelInputController: IMKInputController {</span>
+<span class="org-diff-context">   private var chordDuration: TimeInterval = 0</span>
+<span class="org-diff-context">   private var currentApp: String = ""</span>
+
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">  func getInputMode() -&gt; Bool {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">    return self.rimeAPI.get_option(self.session, "ascii_mode")</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">  }</span>
+<span class="org-diff-indicator-added">+</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">  func setInputMode(ascii_mode: Bool) {</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">    self.rimeAPI.set_option(self.session, "ascii_mode", ascii_mode)</span>
+<span class="org-diff-indicator-added">+</span><span class="org-diff-added">  }</span>
+<span class="org-diff-indicator-added">+</span>
+<span class="org-diff-context">   // swiftlint:disable:next cyclomatic_complexity</span>
+<span class="org-diff-context">   override func handle(_ event: NSEvent!, client sender: Any!) -&gt; Bool {</span>
+     guard let event = event else { return false }
+</pre>
+</div>
+
+<p>
+使用上述 patch 并且编译安装好 Squirrel 后，就可以在 Emacs 中定义自己的 <code>get/set</code> 了，代码如下，主要逻辑是：
+</p>
+<ol class="org-ol">
+<li>连接 Squirrel 暴露出的 socket server</li>
+<li>包装 <code>get/set</code> 方法，内部通过给 Squirrel 发送消息实现</li>
+<li>配置 sis，使用自定义的 <code>get/set</code> 方法，至于 <code>sis-english-source</code> 以及 <code>sis-other-source</code> 自己随意设置即可</li>
+</ol>
+
+<p>
+<b>温馨提示: 大家如果使用，要先保存好自己的当前工作再进行尝试，因为之前测试的时候出现一次卡 Emacs 的情况</b>
+</p>
+
+<blockquote>
+<p>
+目前使用了半天，其实还算稳定，之前出现问题时，是在 emacs 启动 socket 连接之后，重新装了 Squirrel，socket 断了，导致 get 时出错了，而 sis 有一个定时器一直在 get，所以 minibuffer 一直展示错误，虽然可以输入，但是很多操作无法正常进行。不过由于我目前使用稳定，就没有继续处理该问题了
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defvar</span> <span class="org-variable-name">ringawho/rime-process</span> nil)
+(<span class="org-keyword">defvar</span> <span class="org-variable-name">ringawho/rime-process-response</span> <span class="org-string">""</span>)
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/rime-process-create-socket</span> ()
+  <span class="org-doc">"Connect to a TCP server and send a message."</span>
+  (<span class="org-keyword">interactive</span>)
+  (<span class="org-keyword">let*</span> ((buffer (generate-new-buffer <span class="org-string">"*tcp-client*"</span>)))
+    (<span class="org-keyword">setq</span> ringawho/rime-process
+          (open-network-stream <span class="org-string">"tcp-client"</span> buffer <span class="org-string">"localhost"</span> 12345))
+    (set-process-sentinel ringawho/rime-process 'ringawho/rime-process-sentinel)
+    (set-process-filter ringawho/rime-process 'ringawho/rime-process-filter)
+    (set-process-query-on-exit-flag ringawho/rime-process nil)))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/rime-process-sentinel</span> (process event)
+  <span class="org-doc">"Handle connection events for the TCP client."</span>
+  (<span class="org-keyword">when</span> (string-match-p <span class="org-string">"closed</span><span class="org-string"><span class="org-regexp-grouping-backslash">\\</span></span><span class="org-string"><span class="org-regexp-grouping-construct">|</span></span><span class="org-string">failed"</span> event)
+    (kill-buffer (process-buffer process))))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/rime-process-filter</span> (process output)
+  <span class="org-doc">"Handle incoming data from the TCP server."</span>
+  (<span class="org-keyword">setq</span> ringawho/rime-process-response
+        (concat ringawho/rime-process-response output)))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/rime-process-send</span> (<span class="org-type">&amp;rest</span> cmd)
+  <span class="org-doc">"Send a message to the TCP server and wait for a response synchronously."</span>
+  (<span class="org-keyword">setq</span> ringawho/rime-process-response <span class="org-string">""</span>)
+  (process-send-string ringawho/rime-process (string-join cmd <span class="org-string">" "</span>))
+  (<span class="org-keyword">while</span> (<span class="org-keyword">and</span> (not (string-match-p <span class="org-string">"\n"</span> ringawho/rime-process-response))
+              (accept-process-output ringawho/rime-process 0 20)))
+  ringawho/rime-process-response)
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/sis-get</span> ()
+  (<span class="org-keyword">if</span> (string= <span class="org-string">"true"</span> (ringawho/rime-process-send <span class="org-string">"GetInputMode"</span>))
+      sis-english-source
+    sis-other-source))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">ringawho/sis-set</span> (source)
+  (ringawho/rime-process-send
+   <span class="org-string">"SetInputMode"</span>
+   (<span class="org-keyword">if</span> (string= sis-english-source source)
+       <span class="org-string">"true"</span>
+     <span class="org-string">"false"</span>)))
+
+(use-package sis
+  <span class="org-builtin">:config</span>
+  (ringawho/rime-process-create-socket)
+  (<span class="org-keyword">setq</span> sis-english-source <span class="org-string">"en"</span>)
+  (<span class="org-keyword">setq</span> sis-other-source <span class="org-string">"zh-cn"</span>)
+  (<span class="org-keyword">setq</span> sis-do-get #'ringawho/sis-get)
+  (<span class="org-keyword">setq</span> sis-do-set #'ringawho/sis-set)
+  (sis-global-respect-mode))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: ring</p>
+<p class="date">Date: 2024-11-30</p>
+</div>
+</body>
+</html>

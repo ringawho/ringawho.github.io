@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-07-02 -->
+<!-- 2024-11-30 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>神舟mini PC7S Linux下氛围灯控制</title>
@@ -66,14 +66,14 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orge60783a">1. 解决办法</a></li>
-<li><a href="#orgda1239c">2. 逆向过程</a></li>
-<li><a href="#org7871e1f">3. 使用 Cutecom 测试</a></li>
-<li><a href="#org2d5e2e3">4. Linux 氛围灯控制程序</a></li>
-<li><a href="#org668d89b">5. 更好的使用方式</a>
+<li><a href="#org0c0a43c">1. 解决办法</a></li>
+<li><a href="#orgc15f0a5">2. 逆向过程</a></li>
+<li><a href="#orgdd5af5a">3. 使用 Cutecom 测试</a></li>
+<li><a href="#org781c112">4. Linux 氛围灯控制程序</a></li>
+<li><a href="#org4c00129">5. 更好的使用方式</a>
 <ul>
-<li><a href="#org0eef1a9">5.1. 锁屏关闭，解锁打开</a></li>
-<li><a href="#orgbbbe962">5.2. 通过 Emacs 控制</a></li>
+<li><a href="#org53cad88">5.1. 锁屏关闭，解锁打开</a></li>
+<li><a href="#org5425c7e">5.2. 通过 Emacs 控制</a></li>
 </ul>
 </li>
 </ul>
@@ -84,12 +84,12 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 <a href="#org2d5e2e3">Linux 氛围灯控制程序</a>。
+最终我写了一个 Linux 下的 python 脚本控制氛围灯，下面是完成脚本的过程，如果仅对最终的控制程序感兴趣，可直接跳转到 <a href="#org781c112">Linux 氛围灯控制程序</a>。
 </p>
 
 
-<div id="outline-container-orge60783a" class="outline-2">
-<h2 id="orge60783a"><span class="section-number-2">1</span> 解决办法</h2>
+<div id="outline-container-org0c0a43c" class="outline-2">
+<h2 id="org0c0a43c"><span class="section-number-2">1</span> 解决办法</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 硬件层面：开盖拔线。这是从京东商品页的问答区找到的，但这样就是彻底失去了氛围灯
@@ -101,8 +101,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgda1239c" class="outline-2">
-<h2 id="orgda1239c"><span class="section-number-2">2</span> 逆向过程</h2>
+<div id="outline-container-orgc15f0a5" class="outline-2">
+<h2 id="orgc15f0a5"><span class="section-number-2">2</span> 逆向过程</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 在主机自带的 Windows 系统下，有一个 LedControl 的程序，目标就是它
@@ -194,8 +194,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7871e1f" class="outline-2">
-<h2 id="org7871e1f"><span class="section-number-2">3</span> 使用 Cutecom 测试</h2>
+<div id="outline-container-orgdd5af5a" class="outline-2">
+<h2 id="orgdd5af5a"><span class="section-number-2">3</span> 使用 Cutecom 测试</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <a href="https://cutecom.sourceforge.net/">cutecom</a> 是一个串口调试工具，在分析完成之后，通过它来进行简单的调试
@@ -209,8 +209,8 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2d5e2e3" class="outline-2">
-<h2 id="org2d5e2e3"><span class="section-number-2">4</span> Linux 氛围灯控制程序</h2>
+<div id="outline-container-org781c112" class="outline-2">
+<h2 id="org781c112"><span class="section-number-2">4</span> Linux 氛围灯控制程序</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 我使用的是 python 脚本，需要安装 <code>pyserial</code> 库
@@ -257,16 +257,16 @@ python led_control.py 4 1 1
 </div>
 </div>
 
-<div id="outline-container-org668d89b" class="outline-2">
-<h2 id="org668d89b"><span class="section-number-2">5</span> 更好的使用方式</h2>
+<div id="outline-container-org4c00129" class="outline-2">
+<h2 id="org4c00129"><span class="section-number-2">5</span> 更好的使用方式</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 显然，如果使用命令行方式，还是有点麻烦，每次想调节的时候还需要再打开命令行，而且我最主要的目标是晚上睡觉前关闭
 </p>
 </div>
 
-<div id="outline-container-org0eef1a9" class="outline-3">
-<h3 id="org0eef1a9"><span class="section-number-3">5.1</span> 锁屏关闭，解锁打开</h3>
+<div id="outline-container-org53cad88" class="outline-3">
+<h3 id="org53cad88"><span class="section-number-3">5.1</span> 锁屏关闭，解锁打开</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 首先需要一个 dbus 监控锁屏和解锁的事件，具体的 type 以及 interface 会有所不同，我的环境是 KDE。
@@ -290,8 +290,8 @@ dbus-monitor --session <span class="org-string">"type='signal',interface='org.fr
 </div>
 </div>
 
-<div id="outline-container-orgbbbe962" class="outline-3">
-<h3 id="orgbbbe962"><span class="section-number-3">5.2</span> 通过 Emacs 控制</h3>
+<div id="outline-container-org5425c7e" class="outline-3">
+<h3 id="org5425c7e"><span class="section-number-3">5.2</span> 通过 Emacs 控制</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 如果你也使用 Emacs 的话，那么可以使用如下 lisp 代码，如果使用频繁，可以再绑定一个快捷键
