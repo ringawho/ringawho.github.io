@@ -1,0 +1,188 @@
+#+title: MacOS Emacs输入法切换
+#+date: [2024-11-30 Sat]
+
+最近两天折腾了一下 MacOS Emacs 输入法切换的问题，使用了 sis 以及自己 patch Squirrel 实现的（Squirrel是rime的MacOS版本），如果你已经对输入法切换比较熟悉或者是对背景不感兴趣，可以直接跳转到 [[*使用 sis 以及 patch Squirrel 实现输入法切换][使用 sis 以及 patch Squirrel 实现输入法切换]]
+
+* Emacs 中的输入法切换问题
+如果需要经常在 Emacs 中输入中文，那么会碰到输入法切换的问题，主要有两种场景
+
+1. 快捷键：比如使用 ~C-x b~ 的时候，如果本来是在输入中文，在输入 ~b~ 的时候，就需要 ~Enter~ 或 ~Shift~ 将该字符上屏
+2. ~minibuffer~ 中的输入：比如选择 ~buffer~ ，或是找函数 / 变量的文档，就需要再由中文切换到英文
+
+* 解决办法
+下面是我目前知道的方法，这些方法都很好，只是我在使用时会碰到一些问题，我这里就不过多的赘述优点了，主要列一下碰到的问题，以及分享我的解决方案 （MacOS下）
+
+1. Emacs 内部的输入法： ~emacs-rime~ 以及 ~pyim~ 。我只使用过 ~emacs-rime~ ，感受还是很丝滑的
+   + 在 Emacs 内部和外部一样使用 ~Shift~ 切换中英文状态。解决办法：使用 ~Karabiner-Elements~ 映射了快捷键
+   + 在切换到 Emacs 时，需要保证它是英文输入法（这里并不是指中文输入法的英文状态）。解决办法： ~Input Source Pro~ 设置 Emacs 的规则
+   + ~isearch~ 中无法使用 ~emacs-rime~ 。解决办法： ~isearch-mb~ 包，或者 ~Swiper~, ~consult-line~ 等。但我目前是只想用 ~isearch~ ，碰到需要中文的情况也只是将就用，或者临时使用 ~consult-line~
+   + 内外的词库不统一。解决办法：手动同步词库。需求不大，所以没有想办法定时去同步，偶尔会碰到
+   + 字体中不包含的字符，出现之后会卡顿一会。解决办法： ~(setq inhibit-compacting-font-caches t)~, 这样就只会卡第一次了
+2. [[https://github.com/laishulu/emacs-smart-input-source][sis]]： 前段时间想从 ~emacs-rime~ 切换出来，做了尝试，目前对我来说最大的问题是，它是在中英文输入法之间切换的。当我想主动进行切换的时候，需要使用切换输入法的快捷键（在MacOS上是点按CapsLock），但是在其他程序中我切换仅仅是 ~Shift~ 切换中英文输入状态，按键不一致，对我来说有比较大的心智负担
+
+* 使用 sis 以及 patch Squirrel 实现输入法切换
+我的目标是尽可能的全局使用一个输入法，相对来说 sis 是比较符合我的需求的，重点在于怎么由中英文输入法之前切换转到中英文输入状态的切换。
+
+在简单看过 sis 的文档以及部分实现之后，知道它的核心在于 ~sis-do-get~, ~sis-do-set~ 方法，它的输入状态显示以及输入法切换等功能都是基于此实现的。在不同的操作环境有现有的一些解决方案，比如 ~im-select~, ~macism~, ~fcitx~ 等等。所以想实现目标，只要能提供中英文输入状态的 ~get / set~ 即可
+
+那么 Squirrel 是否提供了这个功能呢，很遗憾，没有，它的命令行只有 ~sync~ 和 ~deploy~ 功能。不过它是开源的，那么就可以自己进行改造，Squirrel patch 如下，实现方法并不是很好，而且端口还是写死的。主要还是不会 Swift/OC 这一套，下面的代码还是在 AI 的辅助下写出来的呢
+
+主要的逻辑就两点：
+1. ~SquirrelInputController~ 暴露出获取以及设置 ~ascii_mode~ 的方法
+2. 通过 ~socket~ 暴露出获取和设置中英文输入状态的接口
+
+#+begin_src diff
+  diff --git a/sources/SquirrelApplicationDelegate.swift b/sources/SquirrelApplicationDelegate.swift
+  index c603760..1459a68 100644
+  --- a/sources/SquirrelApplicationDelegate.swift
+  +++ b/sources/SquirrelApplicationDelegate.swift
+  @@ -8,6 +8,7 @@
+   import UserNotifications
+   import Sparkle
+   import AppKit
+  +import Network
+
+   final class SquirrelApplicationDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegate, UNUserNotificationCenterDelegate {
+     static let rimeWikiURL = URL(string: "https://github.com/rime/home/wiki")!
+  @@ -225,6 +226,54 @@ final class SquirrelApplicationDelegate: NSObject, NSApplicationDelegate, SPUSta
+       let notifCenter = DistributedNotificationCenter.default()
+       notifCenter.addObserver(forName: .init("SquirrelReloadNotification"), object: nil, queue: nil, using: rimeNeedsReload)
+       notifCenter.addObserver(forName: .init("SquirrelSyncNotification"), object: nil, queue: nil, using: rimeNeedsSync)
+  +
+  +    do {
+  +      let listener = try NWListener(using: .tcp, on: 12345)
+  +      listener.newConnectionHandler = { connection in
+  +        connection.start(queue: .global())
+  +        func receiveData() {
+  +          connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, isComplete, error in
+  +            if let data = data, !data.isEmpty {
+  +              let req = String(data: data, encoding: .utf8) ?? "Invalid data"
+  +              let cmd = req.split(whereSeparator: { $0.isWhitespace })
+  +
+  +              NSLog("socket req: " + req + ", cmd: " + cmd.description)
+  +              var resp = "Unknown"
+  +              if let inputController = self.panel?.inputController {
+  +                if cmd[0] == "GetInputMode" {
+  +                  resp = inputController.getInputMode() ? "true" : "false"
+  +                } else if cmd[0] == "SetInputMode" {
+  +                  let ascii_mode = cmd.count >= 2 && cmd[1] == "false" ? false : true
+  +                  inputController.setInputMode(ascii_mode: ascii_mode)
+  +                  resp = "Set Success"
+  +                }
+  +              } else {
+  +                resp = "Can not get InputController"
+  +              }
+  +              connection.send(content: resp.data(using: .utf8), completion: .contentProcessed({ error in
+  +                if let error = error {
+  +                  NSLog("socket error %s", error.debugDescription)
+  +                  print("Send error: \(error)")
+  +                }
+  +              }))
+  +            }
+  +
+  +            if error == nil && !isComplete {
+  +              DispatchQueue.global().async {
+  +                receiveData()
+  +              }
+  +            } else {
+  +              NSLog("socket connection cancel")
+  +              connection.cancel()
+  +            }
+  +          }
+  +        }
+  +        receiveData()
+  +      }
+  +      listener.start(queue: .global())
+  +    } catch {
+  +      NSLog("socket error")
+  +    }
+     }
+
+     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+  diff --git a/sources/SquirrelInputController.swift b/sources/SquirrelInputController.swift
+  index b835f42..360e3f7 100644
+  --- a/sources/SquirrelInputController.swift
+  +++ b/sources/SquirrelInputController.swift
+  @@ -29,6 +29,14 @@ final class SquirrelInputController: IMKInputController {
+     private var chordDuration: TimeInterval = 0
+     private var currentApp: String = ""
+
+  +  func getInputMode() -> Bool {
+  +    return self.rimeAPI.get_option(self.session, "ascii_mode")
+  +  }
+  +
+  +  func setInputMode(ascii_mode: Bool) {
+  +    self.rimeAPI.set_option(self.session, "ascii_mode", ascii_mode)
+  +  }
+  +
+     // swiftlint:disable:next cyclomatic_complexity
+     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
+       guard let event = event else { return false }
+#+end_src
+
+使用上述 patch 并且编译安装好 Squirrel 后，就可以在 Emacs 中定义自己的 ~get/set~ 了，代码如下，主要逻辑是：
+1. 连接 Squirrel 暴露出的 socket server
+2. 包装 ~get/set~ 方法，内部通过给 Squirrel 发送消息实现
+3. 配置 sis，使用自定义的 ~get/set~ 方法，至于 ~sis-english-source~ 以及 ~sis-other-source~ 自己随意设置即可
+
+*温馨提示: 大家如果使用，要先保存好自己的当前工作再进行尝试，因为之前测试的时候出现一次卡 Emacs 的情况*
+
+#+begin_quote
+目前使用了半天，其实还算稳定，之前出现问题时，是在 emacs 启动 socket 连接之后，重新装了 Squirrel，socket 断了，导致 get 时出错了，而 sis 有一个定时器一直在 get，所以 minibuffer 一直展示错误，虽然可以输入，但是很多操作无法正常进行。不过由于我目前使用稳定，就没有继续处理该问题了
+#+end_quote
+
+#+begin_src emacs-lisp
+  (defvar ringawho/rime-process nil)
+  (defvar ringawho/rime-process-response "")
+
+  (defun ringawho/rime-process-create-socket ()
+    "Connect to a TCP server and send a message."
+    (interactive)
+    (let* ((buffer (generate-new-buffer "*tcp-client*")))
+      (setq ringawho/rime-process
+            (open-network-stream "tcp-client" buffer "localhost" 12345))
+      (set-process-sentinel ringawho/rime-process 'ringawho/rime-process-sentinel)
+      (set-process-filter ringawho/rime-process 'ringawho/rime-process-filter)
+      (set-process-query-on-exit-flag ringawho/rime-process nil)))
+
+  (defun ringawho/rime-process-sentinel (process event)
+    "Handle connection events for the TCP client."
+    (when (string-match-p "closed\\|failed" event)
+      (kill-buffer (process-buffer process))))
+
+  (defun ringawho/rime-process-filter (process output)
+    "Handle incoming data from the TCP server."
+    (setq ringawho/rime-process-response
+          (concat ringawho/rime-process-response output)))
+
+  (defun ringawho/rime-process-send (&rest cmd)
+    "Send a message to the TCP server and wait for a response synchronously."
+    (setq ringawho/rime-process-response "")
+    (process-send-string ringawho/rime-process (string-join cmd " "))
+    (while (and (not (string-match-p "\n" ringawho/rime-process-response))
+                (accept-process-output ringawho/rime-process 0 20)))
+    ringawho/rime-process-response)
+
+  (defun ringawho/sis-get ()
+    (if (string= "true" (ringawho/rime-process-send "GetInputMode"))
+        sis-english-source
+      sis-other-source))
+
+  (defun ringawho/sis-set (source)
+    (ringawho/rime-process-send
+     "SetInputMode"
+     (if (string= sis-english-source source)
+         "true"
+       "false")))
+
+  (use-package sis
+    :config
+    (ringawho/rime-process-create-socket)
+    (setq sis-english-source "en")
+    (setq sis-other-source "zh-cn")
+    (setq sis-do-get #'ringawho/sis-get)
+    (setq sis-do-set #'ringawho/sis-set)
+    (sis-global-respect-mode))
+#+end_src
+
+
